@@ -5,6 +5,8 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import * as dat from "dat.gui";
 import gsap from "gsap";
 
+import map from "@assets/img/earth.jpg";
+
 export default class Sketch {
 
     constructor() {
@@ -17,7 +19,7 @@ export default class Sketch {
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.setSize(this.width, this.height);
         this.renderer.setClearColor(0xeeeeee, 1);
-        this.renderer.outputEncoding = THREE.sRGBEncoding;
+        //this.renderer.outputEncoding = THREE.sRGBEncoding;
 
         this.container.appendChild(this.renderer.domElement);
 
@@ -65,28 +67,98 @@ export default class Sketch {
     }
 
     addObjects = () => {
-        this.material = new THREE.ShaderMaterial({
-            extensions: {
-                derivatives: "#extension GL_OES_standard_derivatives : enable"
-            },
-            side: THREE.DoubleSide,
-            uniforms: {
-                time: { type: "f", value: 0 },
-                resolution: { type: "v4", value: new THREE.Vector4() },
-                uvRate1: {
-                    value: new THREE.Vector2(1, 1)
-                }
-            },
-            //wireframe: true,
-            // transparent: true,
-            vertexShader: vertex,
-            fragmentShader: fragment
+        // this.material = new THREE.ShaderMaterial({
+        //     extensions: {
+        //         derivatives: "#extension GL_OES_standard_derivatives : enable"
+        //     },
+        //     side: THREE.DoubleSide,
+        //     uniforms: {
+        //         time: { type: "f", value: 0 },
+        //         resolution: { type: "v4", value: new THREE.Vector4() },
+        //         uvRate1: {
+        //             value: new THREE.Vector2(1, 1)
+        //         }
+        //     },
+        //     //wireframe: true,
+        //     // transparent: true,
+        //     vertexShader: vertex,
+        //     fragmentShader: fragment
+        // });
+
+        this.material = new THREE.MeshBasicMaterial({
+            map: new THREE.TextureLoader().load(map)
         });
 
-        this.geometry = new THREE.PlaneBufferGeometry(1, 1, 1, 1);
+        this.geometry = new THREE.SphereBufferGeometry(1, 30, 30);
 
-        this.plane = new THREE.Mesh(this.geometry, this.material);
-        this.scene.add(this.plane);
+        this.planet = new THREE.Mesh(this.geometry, this.material);
+        this.scene.add(this.planet);
+
+        const mesh = new THREE.Mesh(new THREE.SphereBufferGeometry(0.03, 20, 20), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+        const mesh1 = new THREE.Mesh(new THREE.SphereBufferGeometry(0.03, 20, 20), new THREE.MeshBasicMaterial({ color: 0x00ff00 }));
+
+        //coordinates
+
+        function convertLatLngToCartesian(p) {
+            const lat = (90 - p.lat) * Math.PI / 180;
+            const lng = (180 + p.lng) * Math.PI / 180;
+
+            let x = -Math.sin(lat) * Math.cos(lng);
+            let z = Math.sin(lat) * Math.sin(lng);
+            let y = Math.cos(lat);
+
+            return {
+                x,
+                y,
+                z
+            };
+        }
+
+        let point1 = {
+            lat: 38.8951,
+            lng: -77.0364
+        };
+
+        // let point2 = {
+        //     lat: -23.6345,
+        //     lng: 102.5528
+        // };
+        let point2 = {
+            lat: 80.6345,
+            lng: 30.5528
+        };
+
+        const pos = convertLatLngToCartesian(point1);
+        const pos1 = convertLatLngToCartesian(point2);
+
+        mesh.position.set(pos.x, pos.y, pos.z);
+        mesh1.position.set(pos1.x, pos1.y, pos1.z);
+
+        this.scene.add(mesh);
+        this.scene.add(mesh1);
+
+        this.getCurve(pos, pos1);
+
+
+    };
+
+    getCurve = (p1, p2) => {
+        let v1 = new THREE.Vector3(p1.x, p1.y, p1.z);
+        let v2 = new THREE.Vector3(p2.x, p2.y, p2.z);
+        let points = [];
+        for (let i = 0; i <= 20; i++) {
+            let p = new THREE.Vector3().lerpVectors(v1, v2, i / 20);
+            p.normalize();
+            p.multiplyScalar(1 + 0.1 * Math.sin(Math.PI * i / 20));
+            points.push(p);
+        }
+
+        let path = new THREE.CatmullRomCurve3(points);
+
+        const geo = new THREE.TubeGeometry(path, 20, 0.01, 8, false);
+        const mat = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+        const mesh = new THREE.Mesh(geo, mat);
+        this.scene.add(mesh);
     };
 
     render() {
