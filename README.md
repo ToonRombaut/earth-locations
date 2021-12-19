@@ -1,7 +1,7 @@
 # Earth locations
 
 Converting coordinates using latitude and longitude to cartesian coordinates.
-![preview image](https://i.imgur.com/Ehcq59F.gifv)
+![preview image](https://i.imgur.com/SVTn29c.png)
 
 ## Scripts
 
