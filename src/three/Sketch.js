@@ -42,7 +42,6 @@ export default class Sketch {
 
         this.settings();
         this.setupResize();
-        this.render();
 
     }
     settings = () => {
@@ -67,45 +66,39 @@ export default class Sketch {
     }
 
     addObjects = () => {
-        // this.material = new THREE.ShaderMaterial({
-        //     extensions: {
-        //         derivatives: "#extension GL_OES_standard_derivatives : enable"
-        //     },
-        //     side: THREE.DoubleSide,
-        //     uniforms: {
-        //         time: { type: "f", value: 0 },
-        //         resolution: { type: "v4", value: new THREE.Vector4() },
-        //         uvRate1: {
-        //             value: new THREE.Vector2(1, 1)
-        //         }
-        //     },
-        //     //wireframe: true,
-        //     // transparent: true,
-        //     vertexShader: vertex,
-        //     fragmentShader: fragment
-        // });
+        this.tubeMaterial = new THREE.ShaderMaterial({
+            extensions: {
+                derivatives: "#extension GL_OES_standard_derivatives : enable"
+            },
+            side: THREE.DoubleSide,
+            uniforms: {
+                time: { type: "f", value: 0 },
+                resolution: { type: "v4", value: new THREE.Vector4() },
+                uvRate1: {
+                    value: new THREE.Vector2(1, 1)
+                }
+            },
+            transparent: true,
+            vertexShader: vertex,
+            fragmentShader: fragment
+        });
 
-        this.material = new THREE.MeshBasicMaterial({
+        this.earthMaterial = new THREE.MeshBasicMaterial({
             map: new THREE.TextureLoader().load(map)
         });
 
         this.geometry = new THREE.SphereBufferGeometry(1, 30, 30);
 
-        this.planet = new THREE.Mesh(this.geometry, this.material);
+        this.planet = new THREE.Mesh(this.geometry, this.earthMaterial);
         this.scene.add(this.planet);
-
-        const mesh = new THREE.Mesh(new THREE.SphereBufferGeometry(0.03, 20, 20), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
-        const mesh1 = new THREE.Mesh(new THREE.SphereBufferGeometry(0.03, 20, 20), new THREE.MeshBasicMaterial({ color: 0x00ff00 }));
-
-        //coordinates
 
         function convertLatLngToCartesian(p) {
             const lat = (90 - p.lat) * Math.PI / 180;
             const lng = (180 + p.lng) * Math.PI / 180;
 
             let x = -Math.sin(lat) * Math.cos(lng);
-            let z = Math.sin(lat) * Math.sin(lng);
             let y = Math.cos(lat);
+            let z = Math.sin(lat) * Math.sin(lng);
 
             return {
                 x,
@@ -115,30 +108,58 @@ export default class Sketch {
         }
 
         let point1 = {
-            lat: 38.8951,
-            lng: -77.0364
+            lat: 50.4501,
+            lng: 30.5234
         };
 
-        // let point2 = {
-        //     lat: -23.6345,
-        //     lng: 102.5528
-        // };
         let point2 = {
-            lat: 80.6345,
-            lng: 30.5528
+            lat: 25.3548,
+            lng: 51.1839
         };
 
-        const pos = convertLatLngToCartesian(point1);
-        const pos1 = convertLatLngToCartesian(point2);
+        let point3 = {
+            lat: 41.8781,
+            lng: -87.6298
+        };
 
-        mesh.position.set(pos.x, pos.y, pos.z);
-        mesh1.position.set(pos1.x, pos1.y, pos1.z);
+        let point4 = {
+            lat: 32.7767,
+            lng: -96.7970
+        };
 
-        this.scene.add(mesh);
-        this.scene.add(mesh1);
+        let point5 = {
+            lat: 21.1619,
+            lng: -86.8515
+        };
 
-        this.getCurve(pos, pos1);
+        let point6 = {
+            lat: 15.8720,
+            lng: -97.0767
+        };
 
+        let traject = [
+            point1,
+            point2,
+            point3,
+            point4,
+            point5,
+            point6,
+        ];
+
+        for (let i = 0; i < traject.length; i++) {
+            const pos1 = convertLatLngToCartesian(traject[i]);
+
+            const mesh = new THREE.Mesh(new THREE.SphereBufferGeometry(0.015, 20, 20), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+
+            mesh.position.set(pos1.x, pos1.y, pos1.z);
+
+            this.scene.add(mesh);
+            if (i < traject.length - 1) {
+                const pos2 = convertLatLngToCartesian(traject[i + 1]);
+                this.getCurve(pos1, pos2);
+            }
+
+        }
 
     };
 
@@ -155,14 +176,15 @@ export default class Sketch {
 
         let path = new THREE.CatmullRomCurve3(points);
 
-        const geo = new THREE.TubeGeometry(path, 20, 0.01, 8, false);
-        const mat = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+        const geo = new THREE.TubeGeometry(path, 20, 0.005, 8, false);
+        const mat = this.tubeMaterial;
         const mesh = new THREE.Mesh(geo, mat);
         this.scene.add(mesh);
     };
 
     render() {
         this.time = this.clock.getElapsedTime();
+        this.tubeMaterial.uniforms.time.value = this.time;
         requestAnimationFrame(this.render.bind(this));
         this.renderer.render(this.scene, this.camera);
     }

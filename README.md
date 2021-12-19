@@ -1,11 +1,13 @@
-# vite-vue2-starter
+# Earth locations
 
-A simple start for using vue2 with vite, using [underfin's vite-plugin-vue2](https://github.com/underfin/vite-plugin-vue2).
+Converting coordinates using latitude and longitude to cartesian coordinates.
+![preview image](https://i.imgur.com/Ehcq59F.gifv)
 
 ## Scripts
 
 ```bash
-  npm run dev # start dev server
-  npm run build # build for production
-  npm run serve # locally preview production build
+  yarn set version stable # use latest yarn version
+  yarn # install dependencies
+  yarn dev # localy serve application
+  yarn build # build production app
 ```
